@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  aiogram:
+    build: ./telegram_bot
+    restart: always
+    volumes:
+      - ./.env/:/app/.env/:ro
+      - ./telegram_bot/logs/:/app/logs/:rw
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pg_marks:/var/lib/postgresql/data/pgdata/marks
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata/marks
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    command:
+      - "redis-server"
+      - "--loglevel ${REDIS_LOGLEVEL:-warning}"
+      - "--databases 2"
+      - "--save 900 1"
+      - "--save 300 10"
+      - "--save 60 10000"
+      - "--maxmemory ${REDIS_MAXMEM:-50mb}"
+      - "--maxmemory-policy ${REDIS_POLICY:-noeviction}"
+      - "--requirepass ${REDIS_PASS}"
+    volumes:
+      - redis_marks:/data
+    env_file:
+      - ./.env
+
+
+volumes:
+  redis_marks:
+  pg_marks:
