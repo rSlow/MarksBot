@@ -9,7 +9,7 @@ from utils.downloader import GoogleExcelDownloader
 from utils.excel_parser import ExcelTableParser
 
 
-async def update_table():
+async def update_marks():
     data_io: BytesIO = await GoogleExcelDownloader.download(
         doc_id=settings.TABLE_ID
     )
@@ -20,7 +20,7 @@ async def update_table():
 if __name__ == '__main__':
     @time_count
     def main():
-        asyncio.run(update_table())
+        asyncio.run(update_marks())
 
 
     main()

@@ -92,7 +92,7 @@ class BaseKeyboardBuilder(KeyboardBuilder):
             prepared_row: list[KeyboardButton] = []
             for button in buttons_row:
                 prepared_button = self._prepare_button(button)
-                if button is not None:
+                if prepared_button is not None:
                     prepared_row.append(prepared_button)
             return prepared_row
 
