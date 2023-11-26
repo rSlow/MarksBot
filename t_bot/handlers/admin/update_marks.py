@@ -1,9 +1,10 @@
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from FSM.admin import AdminState
 from handlers.admin.start import start_admin
-from keyboards.start import StartKeyboard
+from keyboards.admin import StartAdminKeyboard
 from schedules.update_marks import update_marks as update_marks_func
 
 update_marks_router = Router(name="admin_update_marks")
@@ -11,9 +12,9 @@ update_marks_router = Router(name="admin_update_marks")
 
 @update_marks_router.message(
     AdminState.start,
-    F.text == StartKeyboard.Buttons.admin
+    F.text == StartAdminKeyboard.Buttons.update_marks
 )
-async def update_marks(message: types.Message, state: FSMContext):
+async def update_marks(message: types.Message, state: FSMContext, session: AsyncSession):
     service_message = await message.answer(
         text="Обновляю оценки..."
     )

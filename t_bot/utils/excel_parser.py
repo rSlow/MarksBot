@@ -34,8 +34,8 @@ class ExcelTableParser:
         # индексы ячеек с <ФИО>, для отсчета недель
         week_limiter_indexes: list[int] = main_fio_ser[main_fio_ser == "ФИО"].index.to_list() + [cls.MAIN_BLOCK_ROW_END]
 
-        for i, start_week_idx in enumerate(week_limiter_indexes[:-1]):  # индекс стартовой строки недели
-            end_week_idx = week_limiter_indexes[i + 1] - 1  # индекс последней строки недели
+        for week_num, start_week_idx in enumerate(week_limiter_indexes[:-1]):  # индекс стартовой строки недели
+            end_week_idx = week_limiter_indexes[week_num + 1] - 1  # индекс последней строки недели
             week_df: pd.DataFrame = excel.iloc[start_week_idx:end_week_idx]  # получение df недели
             fio_week_df: pd.DataFrame = week_df[
                 week_df[3].str.contains(r"\w+ \w\. ?\w\.", flags=re.IGNORECASE, regex=True, na=False)
@@ -67,7 +67,7 @@ class ExcelTableParser:
                         pair_marks_ser: pd.Series = fio_week_df.iloc[:, pair_mark_index]  # колонка оценок
                         # проверка соответствия индексов
                         if pair_marks_ser.index.tolist() != fio_week_col.index.tolist():
-                            message = (f"Error within parsing file: indexes <pair_marks_ser> not equal to indexes "
+                            message = (f"Error within parsing file: indexes 'pair_marks_ser' not equal to indexes "
                                        f"<fio_week_col>: {pair_marks_ser.index.tolist() = }, "
                                        f"{fio_week_col.index.tolist() = }, {date = }, "
                                        f"{subject_name = }, {pair_mark_index = }")
@@ -84,11 +84,12 @@ class ExcelTableParser:
                                 pair_number=pair_num,
                                 mark=string_mark,
                                 group=group,
-                                course=course
+                                course=course,
+                                mark_num_index=(pair_mark_index != pair_mark_index_first) + 1
                             ))
 
             # парсинг оценок за прошлый месяц
-            if i == 0:  # только первая итерация
+            if week_num == 0:  # только первая итерация
                 start_prev_month_block = cls.MAIN_BLOCK_ROW_END + 2  # начало и конец блока -VVV-
                 end_prev_month_block = start_prev_month_block + (week_limiter_indexes[1] - week_limiter_indexes[0])
                 prev_month_block: pd.DataFrame = excel.iloc[start_prev_month_block:end_prev_month_block]  # df блока
@@ -102,11 +103,13 @@ class ExcelTableParser:
 
                 for prev_index, value in marks_col[marks_col.notnull()].items():
                     fio = fio_week_col[prev_index]  # получение ФИО
-                    prev_mark_strings: list[str] = value.split()
+                    prev_mark_strings: list[str] = value.split()  # разделение на список оценок
                     for prev_mark_string in prev_mark_strings:
                         prev_mark_string = prev_mark_string.replace(")", "")
+                        # деление на предмет и дату
                         prev_subject_name, prev_string_date, *_ = prev_mark_string.split("(")
                         now = dt.date.today()
+                        # подготовка даты
                         prev_date = dt.datetime.strptime(
                             f"{prev_string_date}.{now.year}",
                             "%d.%m.%Y"
@@ -117,7 +120,9 @@ class ExcelTableParser:
                             subject=prev_subject_name,
                             mark="2",
                             group=group,
-                            course=course
+                            course=course,
+                            mark_num_index=1,
+                            is_in_last_month=True
                         ))
 
         return group_sql_marks
@@ -128,7 +133,7 @@ class ExcelTableParser:
         logger.info("Start parsing table")
 
         sql_marks: list[SMarkIn] = []
-        sheet_names = settings.GROUPS
+        sheet_names = settings.GROUPS[:]
         for sheet_name in sheet_names:
             sql_marks.extend(cls._parse_sheet(
                 data=data,

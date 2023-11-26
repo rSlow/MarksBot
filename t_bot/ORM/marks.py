@@ -1,9 +1,9 @@
-from sqlalchemy import String
+from sqlalchemy import String, select, delete
 from sqlalchemy.orm import mapped_column, Mapped
 from datetime import date
 
 from .base import Base, Session
-from .schemas import SMarkIn
+from .schemas import SMarkIn, SMarkOut
 
 
 class Mark(Base):
@@ -19,10 +19,22 @@ class Mark(Base):
     group: Mapped[str] = mapped_column(String(length=10))
     course: Mapped[int]
 
+    is_in_last_month: Mapped[bool] = mapped_column(default=False)
+    mark_num_index: Mapped[int]
+
     def __str__(self):
         return f"{self.fio} - {self.subject} - {self.mark} ({self.date})"
 
     __repr__ = __str__
+
+    @classmethod
+    async def gel_all(cls):
+        async with Session() as session:
+            q = select(cls)
+            res = await session.execute(q)
+            mark_object_list = res.scalars().all()
+            mark_schema_list = [SMarkOut.model_validate(mark_object) for mark_object in mark_object_list]
+            return mark_schema_list
 
     @classmethod
     async def set_data(cls, data: list[SMarkIn]):
@@ -30,3 +42,12 @@ class Mark(Base):
         async with Session() as session:
             async with session.begin():
                 session.add_all(objects)
+
+    @classmethod
+    async def clear(cls, ids: list[int]):
+        async with Session() as session:
+            async with session.begin():
+                q = delete(cls).filter(
+                    cls.id.in_(ids)
+                )
+                await session.execute(q)

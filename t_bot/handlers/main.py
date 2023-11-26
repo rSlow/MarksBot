@@ -41,7 +41,7 @@ async def error_pass(event: types.ErrorEvent, state: FSMContext):
             text=f"Извините, во время работы бота произошла ошибка. Мы вынуждены вернуть вас на главный экран. "
                  f"Попробуйте воспользоваться функцией еще раз."
         )
-    await message.answer(f"Это сервисное сообщение, перешлите его @rs1ow:\n\n {event.exception}")
+    await message.answer(f"Это сервисное сообщение, перешлите его @rs1ow:\n\n <code>{event.exception}</code>")
     logger.exception(event.exception)
 
 
