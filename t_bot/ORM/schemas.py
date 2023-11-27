@@ -1,7 +1,6 @@
-from pprint import pprint
+from datetime import date as d
 
 import pydantic
-from datetime import date as d
 
 
 class SMarkIn(pydantic.BaseModel):
@@ -9,7 +8,7 @@ class SMarkIn(pydantic.BaseModel):
     date: d
     subject: str | None = None
     pair_number: int | None = None
-    mark: str | None = pydantic.Field(None, max_length=1)
+    mark: str = pydantic.Field(max_length=1)
     group: str = pydantic.Field(max_length=10)
     course: int
     is_in_last_month: bool = False
@@ -49,3 +48,14 @@ class SMarkIn(pydantic.BaseModel):
 
 class SMarkOut(SMarkIn):
     id: int
+
+
+class SMailing(pydantic.BaseModel):
+    id: int
+    telegram_id: int
+    group: str | None = None
+    course: int | None = None
+    all: bool = False
+
+    class Config:
+        from_attributes = True

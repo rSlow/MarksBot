@@ -1,15 +1,13 @@
-from typing import TypeVar, Iterable
+from typing import Iterable
 
-from utils.decors import time_count
+from ORM.schemas import SMarkIn, SMarkOut
+from .schemas import SAnalyze, SUpdated
 
-Schema = TypeVar("Schema")
 
-
-@time_count
 def analyze_schemas(
-        new_schemas: Iterable[Schema],
-        old_schemas: Iterable
-):
+        new_schemas: Iterable[SMarkIn],
+        old_schemas: Iterable[SMarkOut]
+) -> SAnalyze:
     old_schemas_dict = {}
     for old_schema in old_schemas:
         old_schema_hash = hash(old_schema)
@@ -21,9 +19,9 @@ def analyze_schemas(
                                f"{in_dict_old_schema}\n"
                                f"compared schema - {old_schema}")
 
-    updated_schemas: list[Schema] = []
-    added_schemas: list[Schema] = []
-    no_more_schemas: list[Schema] = []
+    updated_schemas: list[SUpdated] = []
+    added_schemas: list[SMarkIn] = []
+    unused_schemas: list[SMarkOut] = []
 
     for new_schema in new_schemas:
         new_schema_hash = hash(new_schema)
@@ -32,8 +30,17 @@ def analyze_schemas(
             del old_schemas_dict[new_schema_hash]
 
             if old_schema != new_schema:
-                updated_schemas.append(new_schema)
+                updated_schemas.append(SUpdated(
+                    old_schema=old_schema,
+                    new_schema=new_schema
+                ))
         else:
             added_schemas.append(new_schema)
 
-    return updated_schemas, added_schemas, no_more_schemas
+    unused_schemas.extend([*old_schemas_dict.values()])
+
+    return SAnalyze(
+        updated_schemas=updated_schemas,
+        added_schemas=added_schemas,
+        unused_schemas=unused_schemas
+    )

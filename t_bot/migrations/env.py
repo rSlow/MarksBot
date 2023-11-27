@@ -2,11 +2,11 @@ import asyncio
 import sys
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from alembic import context
 from config.settings import ENV, BASE_DIR
 
 # this is the Alembic Config object, which provides
@@ -32,6 +32,7 @@ except ImportError as ex:
 
 try:
     from ORM.marks import Mark
+    from ORM.mailing import Mailing
 except ImportError:
     raise
 

@@ -23,8 +23,8 @@ class GoogleExcelDownloader:
                 api_key=settings.API_KEY
             ))
             data = await response.read()
-            data_io = BytesIO(data)
-            return data_io
+        data_io = BytesIO(data)
+        return data_io
 
 
 if __name__ == '__main__':

@@ -1,13 +1,15 @@
 import datetime as dt
 import re
+from functools import partial
 from io import BytesIO
 
 import pandas as pd
+from loky import ProcessPoolExecutor
 
 from ORM.schemas import SMarkIn
 from config import settings
 from config.logger import logger
-from utils.decors import time_count
+from utils.decorators import set_process_async
 
 
 class ExcelTableParser:
@@ -15,6 +17,8 @@ class ExcelTableParser:
 
     @classmethod
     def _parse_sheet(cls, data: BytesIO, sheet_name: str):
+        logger.info(f"Parsing table {sheet_name}")
+
         group = sheet_name
         course = int(group[0])
 
@@ -24,7 +28,6 @@ class ExcelTableParser:
             sheet_name=sheet_name,
             header=None,
         )
-        logger.info(f"Parsing table {sheet_name}")
 
         _, rows_count = excel.shape
         group_sql_marks: list[SMarkIn] = []
@@ -128,15 +131,18 @@ class ExcelTableParser:
         return group_sql_marks
 
     @classmethod
-    @time_count
+    @set_process_async
     def parse_file(cls, data: BytesIO):
         logger.info("Start parsing table")
 
-        sql_marks: list[SMarkIn] = []
-        sheet_names = settings.GROUPS[:]
-        for sheet_name in sheet_names:
-            sql_marks.extend(cls._parse_sheet(
-                data=data,
-                sheet_name=sheet_name
-            ))
-        return sql_marks
+        sheet_names = settings.GROUPS
+        with ProcessPoolExecutor(len(sheet_names)) as pool:
+            mark_sheets_schemas: list[list[SMarkIn]] = [*pool.map(
+                partial(cls._parse_sheet, data),
+                sheet_names
+            )]
+        mark_schemas: list[SMarkIn] = []
+        for mark_sheet_schemas in mark_sheets_schemas:
+            mark_schemas.extend(mark_sheet_schemas)
+
+        return mark_schemas

@@ -1,0 +1,6 @@
+<b>Исправлены двойки:</b> <br>
+
+{% for mark_schema in mark_schemas %}
+    - {{ mark_schema.fio }} ({{ mark_schema.group }}) - {{ mark_schema.subject }} -
+    {{ mark_schema.date.strftime('%d-%m-%Y') }} - исправил на {{ mark_schema.mark }} <br>
+{% endfor %}
