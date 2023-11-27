@@ -1,6 +1,7 @@
 from typing import Iterable
 
 from ORM.schemas import SMarkIn, SMarkOut
+from config.logger import logger
 from .schemas import SAnalyze, SUpdated
 
 
@@ -38,6 +39,10 @@ def analyze_schemas(
             added_schemas.append(new_schema)
 
     unused_schemas.extend([*old_schemas_dict.values()])
+
+    logger.info(f"updated = {len(updated_schemas)} | "
+                f"added = {len(added_schemas)} | "
+                f"unused = {len(unused_schemas)}")
 
     return SAnalyze(
         updated_schemas=updated_schemas,

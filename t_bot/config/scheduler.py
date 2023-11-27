@@ -11,7 +11,7 @@ def init_schedules(bot: Bot):
     scheduler.add_job(
         func=update_marks,
         trigger="interval",
-        minutes=1,
+        minutes=15,
         kwargs={
             "bot": bot,
             "mail": True

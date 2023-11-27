@@ -9,7 +9,7 @@ from loky import ProcessPoolExecutor
 from ORM.schemas import SMarkIn
 from config import settings
 from config.logger import logger
-from utils.decorators import set_process_async
+from utils.decorators import TimeCounter, set_async
 
 
 class ExcelTableParser:
@@ -59,7 +59,7 @@ class ExcelTableParser:
                     try:  # номер пары
                         pair_num = int(week_header_df.iloc[1, pair_start_index][0])
                     except ValueError:
-                        logger.warning("ERROR WITH PARSE PAIR NUMBER")  # CHANGE TO LOGGING
+                        logger.warning("ERROR WITH PARSE PAIR NUMBER")
                         pair_num = 0
                     subject_name = week_header_df.iloc[2, pair_start_index]  # название предмета
 
@@ -131,7 +131,8 @@ class ExcelTableParser:
         return group_sql_marks
 
     @classmethod
-    @set_process_async
+    @TimeCounter.a_sync
+    @set_async
     def parse_file(cls, data: BytesIO):
         logger.info("Start parsing table")
 

@@ -5,6 +5,7 @@ import aiohttp
 
 from config import settings
 from config.logger import logger
+from utils.decorators import TimeCounter
 
 
 class GoogleExcelDownloader:
@@ -14,6 +15,7 @@ class GoogleExcelDownloader:
                      "key={api_key}")
 
     @classmethod
+    @TimeCounter.a_sync
     async def download(cls, doc_id: str):
         async with aiohttp.ClientSession() as session:
             logger.info("Start downloading table")
