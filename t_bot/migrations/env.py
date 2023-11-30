@@ -31,7 +31,8 @@ except ImportError as ex:
     raise ex
 
 try:
-    from ORM.marks import Mark
+    from ORM.marks.study import StudyMark
+    from ORM.marks.practice import PracticeMark
     from ORM.mailing import Mailing
 except ImportError:
     raise

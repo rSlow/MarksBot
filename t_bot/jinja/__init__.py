@@ -1,4 +1,5 @@
 import re
+from datetime import date
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -17,6 +18,8 @@ def render_template(template_name: str, data: dict | None = None) -> str:
         data = {}
 
     template = env.get_template(template_name)
+    template.globals = get_context()
+
     rendered = template.render(**data)
     rendered = rendered.replace("\n", " ")
     rendered = rendered.replace("<br>", "\n")
@@ -24,3 +27,11 @@ def render_template(template_name: str, data: dict | None = None) -> str:
     rendered = "\n".join(line.strip() for line in rendered.split("\n"))
 
     return rendered
+
+
+def get_context():
+    context = {
+        "today": date.today(),
+        "date_format": "%d.%m"
+    }
+    return context

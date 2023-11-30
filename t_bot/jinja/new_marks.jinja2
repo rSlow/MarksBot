@@ -2,5 +2,5 @@
 
 {% for mark_schema in mark_schemas %}
     - {{ mark_schema.fio }} ({{ mark_schema.group }}) - {{ mark_schema.subject }} -
-    {{ mark_schema.date.strftime('%d-%m-%Y') }} <br>
+    {{ mark_schema.date.strftime(date_format) }} <br>
 {% endfor %}

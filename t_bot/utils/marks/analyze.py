@@ -1,13 +1,13 @@
 from typing import Iterable
 
-from ORM.schemas import SMarkIn, SMarkOut
+from ORM.schemas import SStudyMarkIn, SStudyMarkOut
 from config.logger import logger
 from .schemas import SAnalyze, SUpdated
 
 
 def analyze_schemas(
-        new_schemas: Iterable[SMarkIn],
-        old_schemas: Iterable[SMarkOut]
+        new_schemas: Iterable[SStudyMarkIn],
+        old_schemas: Iterable[SStudyMarkOut]
 ) -> SAnalyze:
     old_schemas_dict = {}
     for old_schema in old_schemas:
@@ -21,8 +21,8 @@ def analyze_schemas(
                                f"compared schema - {old_schema}")
 
     updated_schemas: list[SUpdated] = []
-    added_schemas: list[SMarkIn] = []
-    unused_schemas: list[SMarkOut] = []
+    added_schemas: list[SStudyMarkIn] = []
+    unused_schemas: list[SStudyMarkOut] = []
 
     for new_schema in new_schemas:
         new_schema_hash = hash(new_schema)

@@ -1,0 +1,16 @@
+{% for course, course_data in info.items() %}
+
+    <b><u>{{ course }} курс:</u></b>
+
+    {% if course_data.twos %}
+        двоечников: {{ course_data.twos }}, двоек: {{ course_data.marks }}
+    {% else %}
+        двоек нет
+    {% endif %}
+
+    {% if course_data.avg %}
+        , средний балл: {{ course_data.avg }}
+    {% endif %}
+    <br>
+
+{% endfor %}

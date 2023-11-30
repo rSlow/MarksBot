@@ -1,0 +1,13 @@
+{% if mark_schemas %}
+
+    <b>Двойки по практике (двоечников: {{ fio_count }}, двоек: {{ mark_count }}):</b> <br>
+
+    {% for mark_schema in mark_schemas %}
+        {{ loop.index }}. {{ mark_schema.fio }} ({{ mark_schema.group }}) - {{ mark_schema.date.strftime(date_format) }}
+        <br>
+    {% endfor %}
+
+{% else %}
+    Двоек по практике нет.
+{% endif %}
+

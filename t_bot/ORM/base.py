@@ -1,11 +1,16 @@
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
+from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 
 from config.settings import ENV
 
 
 class Base(DeclarativeBase):
-    pass
+    @declared_attr.directive
+    def __tablename__(self) -> str:
+        return self.__name__.lower()
+
+    id: Mapped[int] = mapped_column(primary_key=True)
 
 
 URL = ENV.str("DATABASE_URL")
@@ -33,3 +38,15 @@ async def create_database() -> None:
 
 async def stop_database() -> None:
     await Engine.dispose()
+
+
+async def fetch_query(session: AsyncSession, query: Select):
+    res = await session.execute(query)
+    info = res.fetchall()
+    return info
+
+
+async def fetch_scalars(session: AsyncSession, query: Select):
+    res = await session.execute(query)
+    info = res.scalars().all()
+    return info

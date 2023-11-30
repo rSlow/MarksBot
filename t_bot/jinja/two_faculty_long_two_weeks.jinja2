@@ -1,0 +1,19 @@
+{% if fios %}
+    {{ fios|count }} курсантов, имеющих двойки, полученные более 2-х недель назад
+    ({{ two_weeks_ago.strftime(date_format) }} и ранее): <br>
+
+    {% for fio, marks in fios.items() %}
+        {{ loop.index }}. {{ fio }}
+
+        {% for mark in marks %}
+            {% if loop.first %} ({{ mark.group }}) - {% endif %}
+            {{ mark.subject }} ({{ mark.date.strftime(date_format) }})
+            {% if not loop.last %}, {% endif %}
+        {% endfor %}
+        <br>
+    {% endfor %}
+
+{% else %}
+    Нет курсантов, имеющих двойки, полученные более 2-х недель назад.
+{% endif %}
+

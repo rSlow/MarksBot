@@ -1,0 +1,9 @@
+{% if marks %}
+    Двойки за сегодня ({{ today.strftime(date_format) }}) <br>
+    {% for mark in marks %}
+        {{ loop.index }}. {{ mark.fio }} ({{ mark.group }}) - {{ mark.subject }} <br>
+    {% endfor %}
+{% else %}
+    Двоек за сегодня ({{ today.strftime(date_format) }}) не получено.
+{% endif %}
+

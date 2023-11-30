@@ -6,7 +6,7 @@ from io import BytesIO
 import pandas as pd
 from loky import ProcessPoolExecutor
 
-from ORM.schemas import SMarkIn
+from ORM.schemas import SStudyMarkIn, SPracticeMarkIn
 from config import settings
 from config.logger import logger
 from utils.decorators import TimeCounter, set_async
@@ -15,22 +15,63 @@ from utils.decorators import TimeCounter, set_async
 class ExcelTableParser:
     MAIN_BLOCK_ROW_END = 196
 
-    @classmethod
-    def _parse_sheet(cls, data: BytesIO, sheet_name: str):
-        logger.info(f"Parsing table {sheet_name}")
+    @staticmethod
+    def _get_clean_group(group: str):
+        f, n = group.split("-")
+        return n + f
 
-        group = sheet_name
+    @classmethod
+    def _parse_practice_marks(cls,
+                              data: BytesIO):
+        logger.info(f"Parsing practice marks")
+        excel: pd.DataFrame = pd.read_excel(
+            data,
+            sheet_name="Для НА",
+            header=None,
+        )
+        practice_header_indexes: list[int] = excel[excel[2].str.contains("по практике", na=False)].index.tolist()
+
+        practice_marks: list[SPracticeMarkIn] = []
+
+        if len(practice_header_indexes) == 1:
+            practice_header_index = practice_header_indexes[0]
+            fio_rows: pd.DataFrame = excel.iloc[practice_header_index + 2:, :]
+            for index, fio_row in fio_rows.iterrows():
+                fio = fio_row[3]
+                group = fio_row[4]
+                clean_group = cls._get_clean_group(group)
+                course = int(clean_group[0])
+                dates_str: list[str] = re.findall(r"\d{2}.\d{2}.\d{4}", fio_row[5])
+                for date_str in dates_str:
+                    date_obj = dt.datetime.strptime(date_str, "%d.%m.%Y").date()
+                    practice_marks.append(SPracticeMarkIn(
+                        fio=fio,
+                        date=date_obj,
+                        group=clean_group,
+                        course=course,
+                    ))
+        else:
+            logger.error("Error with get start row (header practice table) - len of list of indexes not equal 1")
+
+        return practice_marks
+
+    @classmethod
+    def _parse_group_sheet(cls,
+                           data: BytesIO,
+                           group: str):
+        logger.info(f"Parsing table {group}")
+
         course = int(group[0])
 
         data.seek(0)
         excel: pd.DataFrame = pd.read_excel(
             data,
-            sheet_name=sheet_name,
+            sheet_name=group,
             header=None,
         )
 
         _, rows_count = excel.shape
-        group_sql_marks: list[SMarkIn] = []
+        group_sql_marks: list[SStudyMarkIn] = []
 
         # отрезаем кусок с импортом двоек за предыдущий месяц
         main_fio_ser: pd.Series = excel[3][:cls.MAIN_BLOCK_ROW_END]
@@ -80,7 +121,7 @@ class ExcelTableParser:
                         for index, mark in pair_marks_ser[pair_marks_ser.notnull()].items():
                             fio = fio_week_col[index].strip()  # получение ФИО
                             string_mark = str(int(mark)) if isinstance(mark, (int, float)) else mark
-                            group_sql_marks.append(SMarkIn(
+                            group_sql_marks.append(SStudyMarkIn(
                                 fio=fio,
                                 date=date,
                                 subject=subject_name,
@@ -117,7 +158,7 @@ class ExcelTableParser:
                             f"{prev_string_date}.{now.year}",
                             "%d.%m.%Y"
                         ).date()
-                        group_sql_marks.append(SMarkIn(
+                        group_sql_marks.append(SStudyMarkIn(
                             fio=fio,
                             date=prev_date,
                             subject=prev_subject_name,
@@ -138,12 +179,13 @@ class ExcelTableParser:
 
         sheet_names = settings.GROUPS
         with ProcessPoolExecutor(len(sheet_names)) as pool:
-            mark_sheets_schemas: list[list[SMarkIn]] = [*pool.map(
-                partial(cls._parse_sheet, data),
+            mark_sheets_schemas: list[list[SStudyMarkIn]] = [*pool.map(
+                partial(cls._parse_group_sheet, data),
                 sheet_names
             )]
-        mark_schemas: list[SMarkIn] = []
+        study_mark_schemas: list[SStudyMarkIn] = []
         for mark_sheet_schemas in mark_sheets_schemas:
-            mark_schemas.extend(mark_sheet_schemas)
+            study_mark_schemas.extend(mark_sheet_schemas)
 
-        return mark_schemas
+        practice_mark_schemas = cls._parse_practice_marks(data=data)
+        return study_mark_schemas, practice_mark_schemas
